@@ -1,0 +1,58 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Coucou</h1>
+
+    <div id="lyrics">
+    <button onclick="nextLyrics(0)">Start</button>
+    </div>
+</body>
+<script defer>
+    var audio = new Audio(`{% static 'nplp/music0.mp3' %}`);
+    var starts = {{starts|safe}}
+    var end = {{end|safe}}
+    var lines = {{lines|safe}}
+    console.log(starts)
+    let lyrics = document.getElementById('lyrics')
+    console.log(lines)
+    const nextLyrics = (index) => {
+        if (index == 0){
+            audio.play()
+            let line = lines[index]
+            lyrics.innerHTML = line
+            setTimeout(() => {
+                nextLyrics(index+1)
+            }, 1000 * end[index].split(':').reduce((p,c,i) => p + c * Math.pow(60, 2-i) , 0))
+        }
+        else if (index < lines.length){
+            let start_time = 1000 * starts[index].split(':').reduce((p,c,i) => p + c * Math.pow(60, 2-i) , 0)
+            let end_time = 1000 * end[index].split(':').reduce((p,c,i) => p + c * Math.pow(60, 2-i) , 0)
+            let w = end_time - start_time
+            let line = lines[index]
+            lyrics.innerHTML = line
+            setTimeout(() => {
+                nextLyrics(index+1)
+            }, w)
+        } else {
+            console.log("pause ?")
+            audio.pause()
+        }
+        
+    }
+
+   
+
+    
+
+    
+
+</script>
+
+</html>
