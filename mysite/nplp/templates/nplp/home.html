@@ -1,10 +1,12 @@
 {% load static %}
+{% load custom_tags %}
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static 'nplp/index.css' %}">
     <title>Document</title>
 </head>
 <body>
@@ -13,15 +15,127 @@
     <div id="lyrics">
     <button onclick="nextLyrics(0)">Start</button>
     </div>
+    <div id="answer" class="invisible">
+        <input id="textinput" type="text"/>
+        <div id="textanswer"></div>
+        <button class="ingame" onclick="handleClick()">Changer le texte</button>
+        <button class="ingame" onclick="validate()">Valider le texte</button>
+    </div>
+    <div id="ausuivant" class="invisible">
+        <button onclick="nextSong()">Au suivant</button>
+    </div>
 </body>
 <script defer>
+    var answer, lines, end, starts, jsArrayData={}, index=0;
+    var musics = {{musics|safe}}
+    var lyricsVar = {{lyrics|safe}}
     var audio = new Audio(`{% static 'nplp/music0.mp3' %}`);
-    var starts = {{starts|safe}}
-    var end = {{end|safe}}
-    var lines = {{lines|safe}}
-    console.log(starts)
+
+    const nextSong = () => {
+        index++;
+        if (index<musics.length){
+            lyrics.classList.toggle('invisible')
+            lyrics.classList.toggle('visible')
+            suivant = document.querySelector('#ausuivant');
+            suivant.classList.toggle("visible")
+            suivant.classList.toggle("invisible")
+            ingame = document.querySelectorAll(".ingame");
+            [...ingame].map(ig => ig.classList.toggle('invisible'));
+            let answerId = document.getElementById('answer');
+            answerId.classList.toggle('visible')
+            answerId.classList.toggle('invisible')
+
+            loadMusic(index)
+            nextLyrics(0)
+        } else {
+            document.body.innerHTML += '<h1>FINI</h1>'
+        }
+        
+        
+    }
+    const validate = () => {
+        let spans = document.querySelectorAll('span');
+        spans.forEach((span, i) => {
+            span.innerText.toLocaleLowerCase() == answer[i] ? span.classList.toggle('good'): span.classList.toggle('bad');
+        })
+        ingame = document.querySelectorAll(".ingame");
+        [...ingame].map(ig => ig.classList.toggle('invisible'));
+        suivant = document.querySelector('#ausuivant');
+        suivant.classList.toggle("visible")
+        suivant.classList.toggle("invisible")
+        audio.play()
+    }
+
+    const loadMusic = (index) => {
+        if (!jsArrayData.hasOwnProperty('0')){
+            console.log("ICIIIIIIIIIIII")
+            {% for i in lyrics %}
+                jsArrayData[{{forloop.counter0 }}] = {{ lyrics|get_lyrics:forloop.counter0 | safe }}
+            {% endfor %}   
+            console.log(jsArrayData)
+            let lyricsData = jsArrayData[index]
+            answer = lyricsData['answer']
+            console.log(answer)
+            end = lyricsData['end']
+            starts = lyricsData['starts']
+            lines = lyricsData['lines']
+
+            var songName = musics[index]
+            src = `/static/nplp/${songName}`;
+            audio.src = src
+        } else {
+            let lyricsData = jsArrayData[index]
+            answer = lyricsData['answer']
+            console.log(answer)
+            end = lyricsData['end']
+            starts = lyricsData['starts']
+            lines = lyricsData['lines']
+
+            var songName = musics[index]
+            src = `/static/nplp/${songName}`;
+            audio.src = src
+            audio.play()
+            let answerId = document.getElementById('textanswer');
+            answerId.innerHTML = ""
+            answer.forEach((word) => {
+                let wordSpan = document.createElement('span');
+                wordSpan.classList = ['wordAnswer']
+                wordSpan.innerText = "_";
+                answerId.appendChild(wordSpan)
+            })
+        }
+       
+    }
+
+    const handleClick = () => {
+        
+        let textInput = document.getElementById('textinput')
+        console.log(textInput.value)
+        let spans = document.querySelectorAll("span")
+        if (textInput.value != ""){
+            textInput.value.split(' ').slice(0,answer.length).forEach((word, i) => {
+            spans[i].innerText = word;
+            })
+        } else {
+            spans.forEach(span => span.innerText="_")
+        }
+        
+        textInput.value = "";
+    }
+
+    
+    loadMusic(index);
+    let answerId = document.getElementById('textanswer');
+    answer.forEach((word) => {
+        let wordSpan = document.createElement('span');
+        wordSpan.classList = ['wordAnswer']
+        wordSpan.innerText = "_";
+        answerId.appendChild(wordSpan)
+    })
+    
+    
     let lyrics = document.getElementById('lyrics')
-    console.log(lines)
+   
     const nextLyrics = (index) => {
         if (index == 0){
             audio.play()
@@ -42,6 +156,11 @@
             }, w)
         } else {
             console.log("pause ?")
+            let answerId = document.getElementById('answer');
+            answerId.classList.toggle('visible')
+            answerId.classList.toggle('invisible')
+            lyrics.classList.toggle("invisible")
+            lyrics.classList.toggle("visible")
             audio.pause()
         }
         
